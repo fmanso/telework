@@ -33,7 +33,13 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Publish .NET (self-contained)
-        run: dotnet publish "TeleworkApp/TeleworkApp.csproj" -c Release -r win-x64 --self-contained true -o "electron/dotnet"
+        shell: pwsh
+        run: |
+          dotnet publish TeleworkApp/TeleworkApp.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            --property:PublishDir="${{ github.workspace }}\\electron\\dotnet\\"
 
       - name: Install Electron dependencies
         working-directory: electron
