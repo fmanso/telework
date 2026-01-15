@@ -1,0 +1,188 @@
+@using TeleworkApp.Data
+@using TeleworkApp.Services
+
+<div class="calendario-mes @(Compact ? "compacto" : "")">
+    <div class="calendario-header-mes">
+        <h5>@MonthName</h5>
+    </div>
+
+    <div class="calendario-dias-semana">
+        <div class="dia-semana">M</div>
+        <div class="dia-semana">T</div>
+        <div class="dia-semana">W</div>
+        <div class="dia-semana">T</div>
+        <div class="dia-semana">F</div>
+    </div>
+
+    <div class="calendario-grid">
+        @foreach (var week in Weeks)
+        {
+            @foreach (var day in week)
+            {
+                @if (day.HasValue)
+                {
+                    var date = new DateOnly(Year, Month, day.Value);
+                    var isHoliday = HolidaysDict.ContainsKey(date);
+                    var dayInfo = DaysDict.GetValueOrDefault(date);
+                    var dayClasses = GetDayClasses(date, isHoliday, dayInfo);
+                    var tooltip = GetTooltip(date, isHoliday, dayInfo);
+
+                    <div class="@dayClasses" 
+                         title="@tooltip"
+                         @onclick="() => OnDayClick(date, isHoliday)">
+                        <span class="dia-numero">@day</span>
+                        @if (isHoliday)
+                        {
+                            <span class="dia-badge festivo-badge">H</span>
+                        }
+                        else if (dayInfo?.Type == WorkType.Home)
+                        {
+                            <span class="dia-badge casa-badge">H</span>
+                        }
+                        else if (dayInfo?.Type == WorkType.Absence)
+                        {
+                            <span class="dia-badge ausencia-badge">A</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="calendario-dia vacio"></div>
+                }
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Year { get; set; }
+    [Parameter] public int Month { get; set; }
+    [Parameter] public bool Compact { get; set; } = false;
+    [Parameter] public EventCallback<DateOnly> OnDayClicked { get; set; }
+    [Parameter] public List<WorkDay> WorkDays { get; set; } = new();
+    [Parameter] public List<Holiday> Holidays { get; set; } = new();
+
+    private List<int?[]> Weeks { get; set; } = new();
+    private Dictionary<DateOnly, WorkDay> DaysDict { get; set; } = new();
+    private Dictionary<DateOnly, Holiday> HolidaysDict { get; set; } = new();
+
+    private string MonthName => new DateTime(Year, Month, 1).ToString("MMMM", new System.Globalization.CultureInfo("en-US"));
+
+    protected override void OnParametersSet()
+    {
+        GenerateCalendar();
+        DaysDict = WorkDays
+            .Where(d => d.Date.Month == Month && d.Date.Year == Year)
+            .ToDictionary(d => d.Date);
+        HolidaysDict = Holidays
+            .Where(h => h.Date.Month == Month && h.Date.Year == Year)
+            .ToDictionary(h => h.Date);
+    }
+
+    private void GenerateCalendar()
+    {
+        Weeks.Clear();
+        var firstDay = new DateOnly(Year, Month, 1);
+        var daysInMonth = DateTime.DaysInMonth(Year, Month);
+
+        // Adjust so week starts on Monday (0 = Monday, 4 = Friday)
+        int firstDayOfWeek = ((int)firstDay.DayOfWeek + 6) % 7;
+        
+        // Only working days (Mon-Fri), so we adjust
+        if (firstDayOfWeek > 4) firstDayOfWeek = 0;
+
+        var currentWeek = new int?[5];
+        int position = 0;
+
+        // Fill empty days at the start
+        for (int i = 0; i < Math.Min(firstDayOfWeek, 5); i++)
+        {
+            currentWeek[position++] = null;
+        }
+
+        for (int day = 1; day <= daysInMonth; day++)
+        {
+            var date = new DateOnly(Year, Month, day);
+            
+            // Skip weekends
+            if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+                continue;
+
+            currentWeek[position++] = day;
+
+            if (position >= 5)
+            {
+                Weeks.Add(currentWeek);
+                currentWeek = new int?[5];
+                position = 0;
+            }
+        }
+
+        // Add last week if it has days
+        if (position > 0)
+        {
+            for (int i = position; i < 5; i++)
+            {
+                currentWeek[i] = null;
+            }
+            Weeks.Add(currentWeek);
+        }
+    }
+
+    private string GetDayClasses(DateOnly date, bool isHoliday, WorkDay? dayInfo)
+    {
+        var classes = "calendario-dia";
+
+        if (isHoliday)
+        {
+            classes += " festivo";
+        }
+        else if (dayInfo != null)
+        {
+            classes += dayInfo.Type switch
+            {
+                WorkType.Home => " casa",
+                WorkType.Absence => " ausencia",
+                _ => " oficina"
+            };
+        }
+        else
+        {
+            // No record = Office by default
+            classes += " oficina";
+        }
+
+        if (date == DateOnly.FromDateTime(DateTime.Today))
+        {
+            classes += " hoy";
+        }
+
+        return classes;
+    }
+
+    private string GetTooltip(DateOnly date, bool isHoliday, WorkDay? dayInfo)
+    {
+        if (isHoliday && HolidaysDict.TryGetValue(date, out var holiday))
+        {
+            return $"{holiday.Name} ({holiday.Type})";
+        }
+
+        if (dayInfo != null)
+        {
+            return dayInfo.Type switch
+            {
+                WorkType.Home => "Remote Work (Home)",
+                WorkType.Absence => "Absence",
+                _ => "Office"
+            };
+        }
+
+        return "Office (click to change)";
+    }
+
+    private async Task OnDayClick(DateOnly date, bool isHoliday)
+    {
+        if (isHoliday) return;
+        await OnDayClicked.InvokeAsync(date);
+    }
+}

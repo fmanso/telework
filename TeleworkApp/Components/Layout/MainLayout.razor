@@ -1,0 +1,25 @@
+@inherits LayoutComponentBase
+@using TeleworkApp.Components.Shared
+
+<div class="page">
+    <main>
+        <div class="top-row px-4">
+            <span class="app-title">Telework Tracker</span>
+            <div class="top-row-actions">
+                <ThemeToggle />
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+ <div id="blazor-error-ui" data-nosnippet>
+     An unhandled error has occurred.
+     <a href="." class="reload">Reload</a>
+     <span class="dismiss">X</span>
+ </div>
+
+

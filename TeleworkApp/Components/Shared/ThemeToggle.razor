@@ -1,0 +1,71 @@
+@inject IJSRuntime JSRuntime
+
+<button class="btn theme-toggle-btn" @onclick="ToggleTheme" title="@(_isDarkTheme ? "Switch to light mode" : "Switch to dark mode")">
+    <i class="@IconClass"></i>
+    <span class="theme-label">@(_isDarkTheme ? "Light" : "Dark")</span>
+</button>
+
+<style>
+    .theme-toggle-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.75rem;
+        border: 1px solid var(--border-light);
+        border-radius: 6px;
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+    }
+
+    .theme-toggle-btn:hover {
+        background-color: var(--bg-hover);
+        border-color: var(--color-primary);
+    }
+
+    .theme-toggle-btn i {
+        font-size: 1.1rem;
+    }
+
+    .theme-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+</style>
+
+@code {
+    private bool _isDarkTheme = false;
+
+    private string IconClass => _isDarkTheme ? "bi bi-sun-fill" : "bi bi-moon-fill";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Load saved preference
+            var savedTheme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "theme");
+            _isDarkTheme = savedTheme == "dark";
+            await ApplyTheme();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        _isDarkTheme = !_isDarkTheme;
+        await ApplyTheme();
+        await SaveThemePreference();
+    }
+
+    private async Task ApplyTheme()
+    {
+        var themeClass = _isDarkTheme ? "dark-theme" : "";
+        await JSRuntime.InvokeVoidAsync("applyTheme", themeClass);
+    }
+
+    private async Task SaveThemePreference()
+    {
+        var theme = _isDarkTheme ? "dark" : "light";
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "theme", theme);
+    }
+}

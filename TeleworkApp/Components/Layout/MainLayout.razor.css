@@ -1,0 +1,78 @@
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-row {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--color-primary);
+}
+
+.top-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.top-row ::deep a, .top-row ::deep .btn-link {
+    white-space: nowrap;
+    margin-left: 1.5rem;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
+    text-decoration: underline;
+}
+
+.content {
+    flex: 1;
+    padding: 1.5rem;
+}
+
+article {
+    background-color: var(--bg-primary);
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

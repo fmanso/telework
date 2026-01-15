@@ -1,0 +1,226 @@
+@page "/"
+@using TeleworkApp.Data
+@using TeleworkApp.Services
+@using TeleworkApp.Components.Shared
+@inject TeleworkService TeleworkService
+@inject HolidayService HolidayService
+@rendermode InteractiveServer
+
+<PageTitle>Telework Tracker</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="titulo-principal">Telework Tracker</h1>
+            <p class="subtitulo">Goal: 60% Office / 40% Home (Quarterly) - Click a day: Office -> Home -> Absence</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Quarter Calendar -->
+        <div class="col-lg-8 col-md-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <QuarterCalendar 
+                        Year="@currentYear" 
+                        Quarter="@currentQuarter"
+                        WorkDays="@workDays"
+                        Holidays="@holidays"
+                        OnQuarterChanged="@ChangeQuarter"
+                        OnDayClicked="@ToggleDay" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-lg-4 col-md-12">
+            @if (statistics != null)
+            {
+                <div class="card estadisticas-card">
+                    <div class="card-header">
+                        <h5>@statistics.QuarterName @statistics.Year</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Days Summary -->
+                        <div class="estadisticas-resumen">
+                            <div class="stat-item">
+                                <span class="stat-label">Working Days</span>
+                                <span class="stat-value">@statistics.WorkingDays</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Holidays</span>
+                                <span class="stat-value festivo">@statistics.HolidayCount</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Absences</span>
+                                <span class="stat-value ausencia">@statistics.AbsenceDays</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Effective Days</span>
+                                <span class="stat-value">@statistics.EffectiveDays</span>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Office/Home Breakdown -->
+                        <div class="desglose">
+                            <div class="desglose-item oficina">
+                                <div class="desglose-header">
+                                    <span class="desglose-icon">O</span>
+                                    <span class="desglose-titulo">Office</span>
+                                </div>
+                                <div class="desglose-datos">
+                                    <span class="desglose-cantidad">@statistics.OfficeDays days</span>
+                                    <span class="desglose-porcentaje">@statistics.OfficePercentage.ToString("F1")%</span>
+                                </div>
+                                <div class="desglose-objetivo">
+                                    Target: @statistics.OfficeTarget days (60%)
+                                </div>
+                            </div>
+
+                            <div class="desglose-item casa">
+                                <div class="desglose-header">
+                                    <span class="desglose-icon">H</span>
+                                    <span class="desglose-titulo">Home</span>
+                                </div>
+                                <div class="desglose-datos">
+                                    <span class="desglose-cantidad">@statistics.HomeDays days</span>
+                                    <span class="desglose-porcentaje">@statistics.HomePercentage.ToString("F1")%</span>
+                                </div>
+                                <div class="desglose-objetivo">
+                                    Maximum: @statistics.HomeTarget days (40%)
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Progress Bar -->
+                        <div class="progreso-container">
+                            <label>Current Distribution</label>
+                            <div class="progreso-barra">
+                                @if (statistics.EffectiveDays > 0)
+                                {
+                                    <div class="progreso-oficina" style="width: @statistics.OfficePercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                                    <div class="progreso-casa" style="width: @statistics.HomePercentage.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                                }
+                            </div>
+                            <div class="progreso-labels">
+                                <span>Office @statistics.OfficePercentage.ToString("F1")%</span>
+                                <span>Home @statistics.HomePercentage.ToString("F1")%</span>
+                            </div>
+                        </div>
+
+                        <!-- Goal Status -->
+                        <div class="objetivo-estado @(statistics.GoalAchieved ? "cumplido" : statistics.OfficePercentage >= 50 ? "alerta" : "peligro")">
+                            @if (statistics.EffectiveDays == 0)
+                            {
+                                <span>No effective days</span>
+                            }
+                            else if (statistics.GoalAchieved)
+                            {
+                                <span>Goal achieved</span>
+                            }
+                            else if (statistics.OfficeRemainingDays > 0)
+                            {
+                                <span>You need @statistics.OfficeRemainingDays more days in office</span>
+                            }
+                            else
+                            {
+                                <span>Check your distribution</span>
+                            }
+                        </div>
+
+                        @if (statistics.HomeAvailableDays > 0 && statistics.EffectiveDays > 0)
+                        {
+                            <div class="info-dias-disponibles">
+                                You can work from home @statistics.HomeAvailableDays more days
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Year Selector -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <label class="form-label">Change year:</label>
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <button class="btn btn-outline-secondary" @onclick="PreviousYear">@(currentYear - 1)</button>
+                            <span class="fw-bold fs-5">@currentYear</span>
+                            <button class="btn btn-outline-secondary" @onclick="NextYear">@(currentYear + 1)</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <p>Loading statistics...</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int currentYear;
+    private int currentQuarter;
+    private List<WorkDay> workDays = new();
+    private List<Holiday> holidays = new();
+    private QuarterStatistics? statistics;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var today = DateTime.Today;
+        currentYear = today.Year;
+        currentQuarter = TeleworkService.GetCurrentQuarter();
+
+        // Load holidays for current and next year
+        await HolidayService.LoadHolidaysAsync(currentYear);
+        await HolidayService.LoadHolidaysAsync(currentYear + 1);
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Load days for the entire quarter
+        workDays = await TeleworkService.GetQuarterDaysAsync(currentYear, currentQuarter);
+        holidays = await HolidayService.GetQuarterHolidaysAsync(currentYear, currentQuarter);
+        statistics = await TeleworkService.GetQuarterStatisticsAsync(currentYear, currentQuarter);
+    }
+
+    private async Task ChangeQuarter((int Year, int Quarter) data)
+    {
+        currentYear = data.Year;
+        currentQuarter = data.Quarter;
+
+        // Load holidays if we changed year
+        await HolidayService.LoadHolidaysAsync(currentYear);
+
+        await LoadData();
+    }
+
+    private async Task ToggleDay(DateOnly date)
+    {
+        await TeleworkService.ToggleDayAsync(date);
+        await LoadData();
+    }
+
+    private async Task PreviousYear()
+    {
+        currentYear--;
+        await HolidayService.LoadHolidaysAsync(currentYear);
+        await LoadData();
+    }
+
+    private async Task NextYear()
+    {
+        currentYear++;
+        await HolidayService.LoadHolidaysAsync(currentYear);
+        await LoadData();
+    }
+}

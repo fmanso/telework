@@ -1,0 +1,66 @@
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Windows shortcuts / installers
+*.lnk
+*.exe
+*.msi
+*.appx
+*.appxbundle
+
+# Logs
+*.log
+
+# IDEs
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# --- .NET / Visual Studio ---
+# Build outputs
+**/bin/
+**/obj/
+
+# NuGet
+**/packages/
+*.nupkg
+*.snupkg
+
+# MSBuild / VS caches
+.vs/
+
+# dotnet tool restore, local tools
+.dotnet/
+
+# --- Electron / Node ---
+**/node_modules/
+
+# Electron builder output
+**/dist/
+**/out/
+**/release/
+
+# Electron-builder caches
+# (These are user-profile folders; listed here only as reference)
+# %LOCALAPPDATA%\electron-builder\Cache\
+
+# Vite/Webpack/etc
+**/.cache/
+
+# --- Project-specific ---
+# Published .NET app copied into Electron resources
+/electron/dotnet/
+
+# Temporary helper script (created during packaging workaround)
+/download-winsign.ps1

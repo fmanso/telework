@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["TeleworkApp.styles.css"]" />
+    <ImportMap />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet />
+</head>
+
+<body>
+    <Routes />
+    <ReconnectModal />
+    <script>
+        window.applyTheme = function(themeClass) {
+            console.log('applyTheme called with:', themeClass);
+            if (themeClass === 'dark-theme') {
+                document.body.classList.add('dark-theme');
+                console.log('Added dark-theme class');
+            } else {
+                document.body.classList.remove('dark-theme');
+                console.log('Removed dark-theme class');
+            }
+            console.log('Body classes now:', document.body.className);
+        };
+
+        window.loadTheme = function() {
+            var savedTheme = localStorage.getItem('theme');
+            console.log('Loading theme, saved:', savedTheme);
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+        };
+
+        // Apply saved theme on load
+        window.loadTheme();
+    </script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>
